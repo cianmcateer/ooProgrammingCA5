@@ -78,6 +78,23 @@ public class ActorStore {
             
         }
     }
+    public void updateActor(String name, int id, double rating, String comment) {
+        Set<String> keySet = actorList.keySet();
+
+        for (String key : keySet) {
+            if (name.equals(key)) {
+                ArrayList<Person> details = (ArrayList<Person>) actorList.get(key);
+                for (Person p : details) {
+                    if (p.getId() == id) {
+                        p.setMyRating(rating);
+                        p.setMyComments(comment);
+                    }
+                }
+            }
+
+        }
+        printActor(name);
+    }
     public void addPerson(String query){
         
         try {
