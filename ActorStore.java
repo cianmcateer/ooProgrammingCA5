@@ -11,9 +11,11 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.TreeMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Scanner;
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -31,20 +33,30 @@ public class ActorStore {
     
     public ActorStore(){
         this.actorList = new HashMap<>();
-    }
+    }    
     
     public void print() {
                 
-        Set<String> keySet = actorList.keySet();
-        ArrayList<Person> list = new ArrayList<>();
-        if (actorList.isEmpty()){
+        //Convert actorlist to treemap so keys are sorted
+        Map sortedList = new TreeMap<>(actorList);
+        //Set of keys will allow us to use for each loop
+        Set<String> keySet = sortedList.keySet();
+                        
+        if (sortedList.isEmpty()){
+            //No actors have been added yet
             System.out.println("There is no actor in the database");
         }
         for (String key : keySet) {
             
-            list = (ArrayList<Person>) actorList.get(key);
+            //Now we are able to access actor details
+            ArrayList<Person> list = (ArrayList<Person>) sortedList.get(key);
+            
+            //Sort actor names using comparator
+            Collections.sort(list, new NameComparator());
+            //Print keys            
             System.out.println(key + ":");
             for(Person p : list){
+                //Print details
                 System.out.println("\t" + p);
             }
             
@@ -52,11 +64,11 @@ public class ActorStore {
     }
     
     public void printActor(String actor){
-        Set<String> keySet = actorList.keySet();
-        ArrayList<Person> list = new ArrayList<>();
+        Set<String> keySet = actorList.keySet();         
         for (String key : keySet) {
             if(actor.equals(key)){
-                list = (ArrayList<Person>) actorList.get(key);
+                //Print specific actor
+                ArrayList<Person> list = (ArrayList<Person>) actorList.get(key);
                 System.out.println(key + ":");
                 for(Person p : list){
                     System.out.println("\t" + p);
@@ -115,15 +127,26 @@ public class ActorStore {
     
     public void searchActor(String actor){
         Set<String> keySet = actorList.keySet();
+        boolean isFound = false;
+        
         for(String key : keySet){
-            if(actorList.containsKey(actor)){
-                System.out.println("Actor: " + actor + " has been found");
-                //printActor(actor);
-                
+            if(key.equalsIgnoreCase(actor)){
+                isFound = true;                
             }
+            else if(actorList.containsKey(actor) == false){
+                isFound = false;
+            }                                
         }
+        
+        if(isFound == true){
+            System.out.println(actor + " has been found");
+            printActor(actor);
+        }else{
+            System.out.println(actor + " is not in database." + actor + " will now be added to database.");
+            addPerson(actor);
+            printActor(actor);
+        }
+        
     }
-    
-    
-
+     
 }
