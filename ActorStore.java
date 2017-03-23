@@ -38,7 +38,7 @@ public class ActorStore {
     public void print() {
                 
         //Convert actorlist to treemap so keys are sorted
-        Map sortedList = new TreeMap<>(actorList);
+        Map<String,ArrayList<Person>> sortedList = new TreeMap<>(actorList);
         //Set of keys will allow us to use for each loop
         Set<String> keySet = sortedList.keySet();
                         
