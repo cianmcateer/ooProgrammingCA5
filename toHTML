@@ -1,0 +1,43 @@
+ //gose in person class
+ 
+ public String toHTMLTableData()
+	{
+		return "<td>" + this.queryName +"</td>"
+			+ "<td>" + this.name +"</td>"
+			+ "<td>" + this.id +"</td>"
+                        + "<td>" + this.imageUrls +"</td>"
+                        + "<td>" + this.personLink +"</td>"
+                        + "<td>" + this.myRating +"</td>"
+                        + "<td>" + this.myComments +"</td>";
+  }
+  
+  
+  //goes in actorstore
+  
+  public static void demoListToHTML(String strPath,String strName, ArrayList<Person> list) throws FileNotFoundException {
+        PrintWriter pWriter = new PrintWriter(strPath + strName);
+
+        pWriter.println("<html>");
+        pWriter.println("<head><title>Actors</title></head>");
+        pWriter.println("<body>");
+        pWriter.println("<table border='1'>");
+        pWriter.println("<tr><td>Query</td><td>Name</td><td>ID</td><td>Image URL's</td><td>Links</td><td>Rating</td><td>Comment</td></tr>");
+
+        for (Person p : list) {
+            pWriter.println("<tr>");
+            pWriter.println(p.toHTMLTableData());
+            pWriter.println("</tr>");
+        }
+
+        pWriter.println("</table>");
+        pWriter.println("</body>");
+        pWriter.println("</html>");
+        pWriter.close();
+     
+    }
+    
+    //goes into addPerson method
+    
+    demoListToHTML(strPath,strName,personList);
+    
+    
