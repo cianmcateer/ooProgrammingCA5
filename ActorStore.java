@@ -68,6 +68,20 @@ public class ActorStore {
 
         }
     }
+    public void printSet(){
+        
+        
+        Set<String> keySet = actorList.keySet();
+        
+        for(String key : keySet){
+            ArrayList<Person> details = (ArrayList<Person>) actorList.get(key);
+            display = new TreeSet<>(details);            
+            for(Person p : display){
+                System.out.println(p);
+            }
+        }
+        
+    }
 
     public void printActor(String actor) {
         Set<String> keySet = actorList.keySet();
