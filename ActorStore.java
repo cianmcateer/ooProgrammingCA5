@@ -145,21 +145,18 @@ public class ActorStore {
 
     }
 
-    public void updateActor(String name, int id, double rating, String comment) {
+    public void updateActor(String queryName,double rating,String comment){
         Set<String> keySet = actorList.keySet();
-
-        for (String key : keySet) {
-            if (name.equals(key)) {
-                ArrayList<Person> details = (ArrayList<Person>) actorList.get(key);
-                for (Person p : details) {
-                    if (p.getId() == id) {
-                        p.setMyRating(rating);
-                        p.setMyComments(comment);
-                    }
+        
+        for(String key : keySet){
+            ArrayList<Person> details = (ArrayList<Person>) actorList.get(key);
+            for(Person p : details){
+                if(queryName.equalsIgnoreCase(p.getName())){
+                    p.setMyRating(rating);
+                    p.setMyComments(comment);
                 }
             }
         }
-        printActor(name);
     }
 
     public void searchActor(String actor) {
