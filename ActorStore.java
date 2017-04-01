@@ -40,7 +40,7 @@ public class ActorStore {
         
     }
 
-    public void print() {
+/*    public void print() {
 
         //Convert actorlist to treemap so keys are sorted
         Map sortedList = new TreeMap<>(actorList);
@@ -67,20 +67,24 @@ public class ActorStore {
             }
 
         }
-    }
-    public void printSet(){
-        
-        
+    }*/
+    public Set<Person> sortSet(final Comparator<Person> C) {
+
         Set<String> keySet = actorList.keySet();
-        
-        for(String key : keySet){
-            ArrayList<Person> details = (ArrayList<Person>) actorList.get(key);
-            display = new TreeSet<>(details);            
-            for(Person p : display){
-                System.out.println(p);
+        display = new TreeSet<>(C);
+        for (String key : keySet) {
+            List<Person> details = (ArrayList<Person>) actorList.get(key);
+            for (Person p : details) {
+                display.add(p);
             }
         }
-        
+        return display;
+    }
+
+    public void print(Set<Person> set) {        
+        for (Person p : set) {
+            System.out.println(p);
+        }
     }
 
     public void printActor(String actor) {
