@@ -1,0 +1,92 @@
+public void addPerson(String query){
+        
+        try {
+            URL url = new URL("http://api.tvmaze.com/search/people?q=" + query);
+            
+            InputStream in = url.openStream();
+
+            JsonReader reader = Json.createReader(in);
+
+            JsonArray array = reader.readArray();  // top level object - first "["
+            
+            // Having consumed the first "[" and read in the JsonArray,
+            // we can iterate over the elements in the array, and extract
+            // each JsonObject.
+            
+            
+            ArrayList<Person> personList = new ArrayList<>();
+            ArrayList<String> imageUrls = new ArrayList<String>(); 
+            
+            for(int i = 0; i < array.size(); i++)
+            {
+                JsonObject object = array.getJsonObject(i);
+                
+                JsonObject personObject = object.getJsonObject("person");
+                JsonObject linksObject = personObject.getJsonObject("_links");
+                JsonObject selfObject = linksObject.getJsonObject("self");
+                
+                JsonObject imageObject = null;
+                try{
+                    imageObject = personObject.getJsonObject("image");
+                }catch(ClassCastException ex){
+                    
+                }
+                
+                double score = object.getJsonNumber("score").doubleValue();
+                String queryName = query;
+                String name = personObject.getJsonString("name").getString();
+                int id = personObject.getJsonNumber("id").intValue();
+                
+                String personLink = selfObject.getJsonString("href").getString();
+                
+                
+                String imageMedium = null; 
+                String imageOriginal = null; 
+                if(imageObject != null)
+                {
+                    imageMedium = imageObject.getString("medium", "null"); 
+                    imageOriginal = imageObject.getString("original", "null");
+                    
+                }
+                
+                double myRating = 0; 
+                String myComments = "";
+                
+                Person person = new Person(score, queryName, name, id, imageMedium, personLink, myRating, myComments);
+                personList.add(person);
+                
+                actorList.put(query, personList);
+                
+                
+            }
+            demoListToHTML(strPath,strName,personList);
+            
+        } catch (IOException e) {
+        }
+    }
+    
+    
+    
+    public static void demoListToHTML(String strPath,String strName, ArrayList<Person> list) throws FileNotFoundException {
+        // PrintWriter pWriter = new PrintWriter(strPath + strName);
+        PrintWriter pWriter = new PrintWriter(new FileOutputStream(new File(strPath+strName),true));
+       
+        pWriter.println("<html>");
+        pWriter.println("<head><title>Actors</title></head>");
+        pWriter.println("<body>");
+        pWriter.println("<table border='1'>");
+        pWriter.println("<tr><td>Query</td><td>Name</td><td>ID</td><td>Image URL's</td><td>Links</td><td>Rating</td><td>Comment</td></tr>");
+
+        for (Person p : list) {
+            pWriter.println("<tr>");
+            pWriter.println(p.toHTMLTableData());
+            pWriter.println("</tr>");
+        }
+
+        pWriter.println("</table>");
+        pWriter.println("<br><br><br>");
+        pWriter.println("</body>");
+        pWriter.println("</html>");
+        pWriter.close();
+     
+    }
