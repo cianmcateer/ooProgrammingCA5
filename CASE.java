@@ -5,14 +5,12 @@
  */
 package ooprogrammingca5;
 
-import java.util.Comparator;
 /**
  *
  * @author CianMcAteer
  */
-public final class NameComparator implements Comparator<Person>{
-    @Override
-    public int compare(Person p1,Person p2){
-        return p1.getName().compareTo(p2.getName());
-    }
+public enum CASE {
+    
+    
+    
 }

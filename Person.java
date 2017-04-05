@@ -3,33 +3,36 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package oopca;
+package ooprogrammingca5;
 
+import java.io.Serializable;
 import java.util.Objects;
 
+public class Person implements Serializable {
 
-public class Person {
-    
-private double score; // (value indicating the quality of match for search query)
-private String queryName; //(query name used to retrieve this Actor)
-private String name;
-private int id;
-private String imageUrls;// (2 or more)
-private String personLink;
-private double myRating; 
-private String myComments;
 
-    public Person(double score, String queryName, String name, int id, String imageUrls, String personLink, double myRating, String myComments) {
+    private double score; // (value indicating the quality of match for search query)
+    private String queryName; //(query name used to retrieve this Actor)
+    private String name;
+    private int id;
+    private String mediumImage;
+    private String originalImage;
+    private String personLink;
+    private double myRating;
+    private String myComments;
+
+    public Person(double score, String queryName, String name, int id, String mediumImage, String originalImage, String personLink, double myRating, String myComments) {
         this.score = score;
         this.queryName = queryName;
         this.name = name;
         this.id = id;
-        this.imageUrls = imageUrls;
+        this.mediumImage = mediumImage;
+        this.originalImage = originalImage;
         this.personLink = personLink;
         this.myRating = myRating;
         this.myComments = myComments;
     }
-
+    
     public double getScore() {
         return score;
     }
@@ -62,12 +65,20 @@ private String myComments;
         this.id = id;
     }
 
-    public String getImageUrls() {
-        return imageUrls;
+    public String getMediumImage() {
+        return mediumImage;
     }
 
-    public void setImageUrls(String imageUrls) {
-        this.imageUrls = imageUrls;
+    public void setMediumImage(String mediumImage) {
+        this.mediumImage = mediumImage;
+    }
+
+    public String getOriginalImage() {
+        return originalImage;
+    }
+
+    public void setOriginalImage(String originalImage) {
+        this.originalImage = originalImage;
     }
 
     public String getPersonLink() {
@@ -96,15 +107,16 @@ private String myComments;
 
     @Override
     public int hashCode() {
-        int hash = 3;
-        hash = 83 * hash + Objects.hashCode(this.score);
-        hash = 83 * hash + Objects.hashCode(this.queryName);
-        hash = 83 * hash + Objects.hashCode(this.name);
-        hash = 83 * hash + this.id;
-        hash = 83 * hash + Objects.hashCode(this.imageUrls);
-        hash = 83 * hash + Objects.hashCode(this.personLink);
-        hash = 83 * hash + (int) (Double.doubleToLongBits(this.myRating) ^ (Double.doubleToLongBits(this.myRating) >>> 32));
-        hash = 83 * hash + Objects.hashCode(this.myComments);
+        int hash = 7;
+        hash = 59 * hash + (int) (Double.doubleToLongBits(this.score) ^ (Double.doubleToLongBits(this.score) >>> 32));
+        hash = 59 * hash + Objects.hashCode(this.queryName);
+        hash = 59 * hash + Objects.hashCode(this.name);
+        hash = 59 * hash + this.id;
+        hash = 59 * hash + Objects.hashCode(this.mediumImage);
+        hash = 59 * hash + Objects.hashCode(this.originalImage);
+        hash = 59 * hash + Objects.hashCode(this.personLink);
+        hash = 59 * hash + (int) (Double.doubleToLongBits(this.myRating) ^ (Double.doubleToLongBits(this.myRating) >>> 32));
+        hash = 59 * hash + Objects.hashCode(this.myComments);
         return hash;
     }
 
@@ -120,7 +132,7 @@ private String myComments;
             return false;
         }
         final Person other = (Person) obj;
-        if (this.score != other.score) {
+        if (Double.doubleToLongBits(this.score) != Double.doubleToLongBits(other.score)) {
             return false;
         }
         if (this.id != other.id) {
@@ -135,7 +147,10 @@ private String myComments;
         if (!Objects.equals(this.name, other.name)) {
             return false;
         }
-        if (!Objects.equals(this.imageUrls, other.imageUrls)) {
+        if (!Objects.equals(this.mediumImage, other.mediumImage)) {
+            return false;
+        }
+        if (!Objects.equals(this.originalImage, other.originalImage)) {
             return false;
         }
         if (!Objects.equals(this.personLink, other.personLink)) {
@@ -149,10 +164,26 @@ private String myComments;
 
     @Override
     public String toString() {
-        return "Person{" + "score=" + score + ", queryName=" + queryName + ", name=" + name + ", id=" + id + ", imageUrls=" + imageUrls + ", personLink=" + personLink + ", myRating=" + myRating + ", myComments=" + myComments + '}';
+        return "Person{" + "score=" + score + ", queryName=" + queryName + ", name=" + name + ", id=" + id + ", mediumImage=" + mediumImage + ", originalImage=" + originalImage + ", personLink=" + personLink + ", myRating=" + myRating + ", myComments=" + myComments + '}';
+    }
+          
+    public String toHTMLTableData() {
+        char quote = '"';
+        
+        if(this.mediumImage == null){
+            this.mediumImage = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
+        }
+        if(this.originalImage == null){
+            this.originalImage = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
+        }
+        return "<td>" + this.queryName + "</td>"
+                + "<td>" + this.name + "</td>"
+                + "<td>" + this.id + "</td>"
+                + "<td>" + "<img src=" + quote + this.mediumImage + quote + " height=\"360\" width=\"360\">" + "</td>"
+                + "<td>" + "<img src=" + quote + this.originalImage + quote + " height=\"420\" width=\"420\">" + "</td>"
+                + "<td>" + "<a href=" + quote + this.personLink + quote + ">" + "Details for " + this.name + "</a>" + "</td>"
+                + "<td>" + this.myRating + "</td>"
+                + "<td>" + this.myComments + "</td>";
     }
 
-
-
-    
 }

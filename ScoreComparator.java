@@ -6,13 +6,20 @@
 package ooprogrammingca5;
 
 import java.util.Comparator;
+
 /**
  *
  * @author CianMcAteer
  */
-public final class NameComparator implements Comparator<Person>{
+public class ScoreComparator implements Comparator<Person>{
     @Override
     public int compare(Person p1,Person p2){
-        return p1.getName().compareTo(p2.getName());
+         if(p1.getScore() > p2.getScore()){
+            return 1;
+        }
+        else if(p1.getScore() < p2.getScore()){
+            return -1;
+        }
+        return 0;
     }
 }
