@@ -12,34 +12,24 @@ package ooprogrammingca5;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
 import java.util.Set;
+import java.awt.Desktop;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public class Main {
 
     public static void main(String[] args) {
-
         Scanner in = new Scanner(System.in);
-
         ActorStore actorStore = new ActorStore();
-
-        String[] options = {"Display all actors by name",
-            "Display all actors by ID",
-            "Display all actors by Rating",
-            "Print an actor",
-            "Update Actor",
-            "Add new search term",
-            "Search for actor",
-            "Save to binary file and add to html page",
-            "Print hash map"
-        };
-
         int menu = 0;
         boolean isNumber;
-        boolean isString;
         do {
             System.out.println("Welcome to anyactor.ie! Please choose from the following options");
-            for (int i = 0; i < options.length; i++) {
-                System.out.println(i + ". " + options[i]);
-            }
+            displayOptions();
             do {
                 if (in.hasNextInt()) {
                     menu = in.nextInt();
@@ -54,73 +44,169 @@ public class Main {
             switch (menu) {
                 case 0:
                     System.out.println("Actors sorted by name");
-                    Set<Person> nameSet = actorStore.sortSet(new NameComparator());
-                    actorStore.print(nameSet);
+                    Set<Person> set = actorStore.sortSet(new NameComparator());
+                    actorStore.print(set);
                     break;
                 case 1:
                     System.out.println("Actors sorted by ID");
-                    Set<Person> idSet = actorStore.sortSet(new UIDComparator());
-                    actorStore.print(idSet);
+                    set = actorStore.sortSet(new UIDComparator());
+                    actorStore.print(set);
                     break;
                 case 2:
                     System.out.println("Actors sorted by Rating");
-                    Set<Person> ratingSet = actorStore.sortSet(new RatingComparator());
-                    actorStore.print(ratingSet);
+                    set = actorStore.sortSet(new RatingComparator());
+                    actorStore.print(set);
                     break;
                 case 3:
-                    System.out.println("Please enter an actor to print");
-                    in.nextLine();
-                    String actor = in.nextLine();
-                                       
-                    actorStore.printSearch(actor);
+                    String actor = "";
+                    boolean isName;
+                    do {
+                        actor = in.nextLine();
+                        if (validName(actor)) {
+                            actorStore.printSearch(actor);
+                            isName = true;
+                        } else {
+                            System.out.println("Please enter a valid name (No digits,special characters or empty spaces)");
+                            isName = false;
+                        }
+                    } while (!isName);
+
                     break;
                 case 4:
                     System.out.println("Update by Adding your score and comment here");
-                    System.out.println("Name");
-                    in.nextLine();
-                    String actorName = in.nextLine();
-                    System.out.println("Rating (Out of 5)");
-                    double rating = in.nextDouble();
-                    System.out.println("Comment");
-                    in.nextLine();
-                    String comment = in.nextLine();
-
-                    actorStore.updateActor(actorName, rating, comment);
-                    break;
-                case 5:
-                    System.out.println("Please add a new search term here");
-                    in.nextLine();
-                    String query = in.nextLine();
-                    actorStore.addPerson(query);
-                    System.out.println(query + " has been added!");
-                    break;
-
-                case 6:
-                    System.out.println("Search for actor here");
-                    in.nextLine();
-                    String actorQuery = in.nextLine();
-                    actorStore.searchActor(actorQuery);
-                    break;
-                case 7:
-                    //Save and send to file
-                    System.out.println("Your data has been saved and added to our web page!");
-                    try {
-                        Set<Person> sortedSet = actorStore.sortSet(new NameComparator());
-                        actorStore.demoListToHTML(sortedSet);
-                    } catch (FileNotFoundException e) {
+                    String actorName = "";
+                    double rating = -1;
+                    while (!validName(actorName)) {
+                        System.out.println("Please enter actor name (No digits/Special Characters/empty spaces");
+                        in.nextLine();
+                        actorName = in.nextLine();
+                    }
+                    while (!validDouble(rating)) {
+                        System.out.println("Rating (0-5)");
+                        rating = in.nextDouble();
                     }
 
+                    System.out.println("Comment");
+                    in.nextLine();
+
+                    String comment = in.nextLine();
+                    actorStore.update(actorName, rating, comment);
+                    break;
+                case 5:
+
+                    String query = "";
+                    while (!validName(query)) {
+                        System.out.println("Please add a new search term here");
+                        in.nextLine();
+                        query = in.nextLine();
+                        actorStore.addPerson(query);
+                    }
+                    System.out.println(query + " has been added!");
+                    break;
+                case 6:
+                    String actorQuery = "";
+                    while (!validName(actorQuery)) {
+                        System.out.println("Search for actor here (No special characters,digits or empty space)");
+                        in.nextLine();
+                        actorQuery = in.nextLine();
+                        actorStore.search(actorQuery);
+                    }
+                    break;
+                case 7:
+                    // Save and send to file
+                    System.out.println("Your data has been saved");
                     actorStore.sendToFile();
                     System.exit(0);
                     break;
                 case 8:
+                    // Prints Search term along with the actors it added to the hashmap
                     System.out.println("Print map");
                     actorStore.printMap();
                     break;
+                case 9:
+                    System.out.println("Delete search");
+                    String deleteKey = "";
+                    while (!validName(deleteKey)) {
+                        in.nextLine();
+                        deleteKey = in.nextLine();
+                    }
+
+                    actorStore.removeSearch(deleteKey);
+                    break;
+                case 10:
+                    String deleteActor = "";
+                    while (!validName(deleteActor)) {
+                        System.out.println("Delete actor");
+                        in.nextLine();
+                        deleteActor = in.nextLine();
+                    }
+                    actorStore.removeActor(deleteActor);
+                    break;
+                case 11:
+                    System.out.println("Saved to html");
+                    try {
+                        actorStore.demoListToHTML();
+                    } catch (FileNotFoundException e) {
+                    }
+                    break;
                 default:
-                    System.out.println("Invalid command");
+                    System.out.println("Invalid command please select one of the options from the menu");
                     break;
             }
         } while (menu != -1);
+    }
+
+    private static void openPage() {
+        if (Desktop.isDesktopSupported()) {
+            try {
+                Desktop.getDesktop().browse(new URI("actors.html"));
+            } catch (IOException | URISyntaxException e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("Not supported");
+        }
+
+    }
+
+    private static boolean validName(String s) {
+
+        //Letters and spaces only
+        String regex = "[a-zA-Z][a-zA-Z ]*";
+
+        if (!s.matches(regex) || s.equals("")) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+    
+    private static boolean validDouble(double d) { // Returns false if number is greater 5 or less than 0
+        if (d < 1) {
+            return false;
+        } else if (d > 5) {
+            return false;
+        }
+        return true;
+    }
+
+    
+    private static void displayOptions() { // Reading from a file allows us to update the menu without having to access our code
+        final String FILE = "options.txt";
+
+        try {
+            FileInputStream fis = new FileInputStream(FILE);
+            BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+
+            String option;
+            // Print line as long as it has text i.e not null
+            while ((option = br.readLine()) != null) {
+                System.out.println(option);
+            }
+            br.close();
+        } catch (IOException e) {
+            System.out.println("ERROR: " + e);
+        }
+
     }
 }
