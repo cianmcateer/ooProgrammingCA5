@@ -24,6 +24,8 @@ import java.util.Set;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
 import java.util.List;
 import java.util.TreeSet;
 import javax.json.Json;
@@ -39,11 +41,14 @@ public class ActorStore {
 
     private Map<String, ArrayList<Person>> actorList;
     private Set<Person> display;
-    private final static String SAVEFILE = "persons.dat";
+    private static final String SAVEFILE = "persons.dat";
+    private static final String HTLMFILE = "actors.html";
+
+    public static final String ERRORIMAGE = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
 
     public ActorStore() {
         this.actorList = new HashMap<>();
-//        readFromFile();
+        readFromFile();
     }
 
     public void printMap() {
@@ -73,34 +78,75 @@ public class ActorStore {
                 if (p.getOriginalImage() == null) {
                     p.setOriginalImage("No original image available");
                 }
-                //Print details      
-                display.add(p);
+                //Print details                      
                 System.out.println("\t" + p);
             }
         }
     }
 
-    public Set<Person> sortSet(final Comparator<Person> C) {
+    public Set<Person> sortSet(final Comparator<Person> C) { //Use any type of person comparator to sort Tree Set        
         Set<String> keySet = actorList.keySet();
+        //Display is converted from set to treeset
         display = new TreeSet<>(C);
         for (String key : keySet) {
+            //Get person list from hashmap
             List<Person> details = (ArrayList<Person>) actorList.get(key);
-            for (Person p : details) {
-                display.add(p);
+            // if Comparator is type RatingComparator we need to filter out the actors who have not been rated
+            if (C instanceof RatingComparator) {
+                //add to display treeset
+                for (Person p : details) {
+                    if (p.getMyRating() != 0) {
+                        display.add(p);
+                    }
+
+                }
+            } else { //Print as normal
+                //add to display treeset
+                for (Person p : details) {
+                    display.add(p);
+                }
             }
+
         }
         return display;
     }
 
-    public void print(Set<Person> set) {
+    public void print(Set<Person> set) { // Print out any set of type Person
         if (set.isEmpty()) {
-            System.out.println("Database is empty");
+            System.out.println("No actors have been added.");
         } else {
             for (Person p : set) {
                 System.out.println(p);
             }
         }
+    }
 
+    public void removeSearch(String key) { // Remove unwanted search queries and all there results
+        if (actorList.isEmpty()) {
+            System.out.println("Actor Database is empty!");
+        }
+        if (actorList.containsKey(key)) {
+            actorList.remove(key);
+        } else {
+            System.out.println(key + " was not found.");
+        }
+
+    }
+
+    public void removeActor(String actor) { // Remove specific actor
+        Set<String> keySet = actorList.keySet();
+
+        for (String key : keySet) {
+            List<Person> list = (ArrayList<Person>) actorList.get(key);
+            // Iterator is used as we can't remove objects with foreach loop
+            Iterator<Person> iter = list.iterator();
+            while (iter.hasNext()) {
+                if (iter.next().getName().equalsIgnoreCase(actor)) {
+                    iter.remove();
+                    System.out.println(actor + " has been removed.");
+                }
+            }
+        }
     }
 
     public void printSearch(String actor) {
@@ -124,8 +170,9 @@ public class ActorStore {
     }
 
     public void addPerson(String query) {
-
+        String message = "";
         try {
+            // Get JSON file where our data comes from
             URL url = new URL("http://api.tvmaze.com/search/people?q=" + query);
 
             InputStream in = url.openStream();
@@ -168,61 +215,72 @@ public class ActorStore {
 
                 }
 
-                double myRating = 0;
+                double myRating = 0.0;
                 String myComments = "No comment";
 
                 Person person = new Person(score, queryName, name, id, imageMedium, imageOriginal, personLink, myRating, myComments);
-                personList.add(person);
+                if (person.getName() == null) {
+                    message = query + " did not return anything";
+                } else {
+                    message = person.getQueryName() + " query added to search";
+                    personList.add(person);
 
-                actorList.put(query, personList);
+                    actorList.put(query, personList);
+
+                }
 
             }
-//            demoListToHTML(strPath,strName,personList);
 
+        } catch (ConcurrentModificationException e) {
+            System.out.println("Error " + e);
+        } catch (MalformedURLException e) {
+            System.out.println("Error: " + e);
+        } catch (UnsupportedEncodingException e) {
+            System.out.println("Error: " + e);
         } catch (IOException e) {
+            System.out.println("Error: " + e);
         }
+        System.out.println(message);
     }
 
-    public void updateActor(String queryName, double rating, String comment) {
+    public void update(String queryName, double rating, String comment) { // Update the rating and comment of a specific actor
         if (actorList.isEmpty()) {
             System.out.println("Sorry there are no actors in the database");
-        } else {
+        } else { // If hashmap has values
             Set<String> keySet = actorList.keySet();
             for (String key : keySet) {
                 List<Person> details = (ArrayList<Person>) actorList.get(key);
                 for (Person p : details) {
+                    // If name is found
                     if (queryName.equalsIgnoreCase(p.getName())) {
+                        // Re set values
                         p.setMyRating(rating);
                         p.setMyComments(comment);
                     }
                 }
             }
         }
-
     }
 
-    public void searchActor(String actor) {
+
+    public void search(String query) {
         Set<String> keySet = actorList.keySet();
-
-        String message = "";
-        boolean flag = false;
+        
+        Set<Person> foundSet = new TreeSet<>(new ScoreComparator());        
         for (String key : keySet) {
-
             List<Person> details = (ArrayList<Person>) actorList.get(key);
-
             for (Person p : details) {
-                if (p.getName().equalsIgnoreCase(actor)) {
-                    flag = true;
-                    message = actor + " has been found";
-                    System.out.println(p);
-                } else if (!flag) {
-                    message = actor + " is not in database." + actor + " will now be added to database.";
-                    addPerson(actor);
+                if (p.getName().toLowerCase().startsWith(query.toLowerCase()) || p.getName().toLowerCase().endsWith(query)) {
+                    foundSet.add(p);                    
                 }
             }
         }
-        System.out.println(message);
-
+        if(!foundSet.isEmpty()){
+            print(foundSet);
+        }else{
+            addPerson(query);
+        }
+         
     }
 
     public void sendToFile() {
@@ -235,22 +293,25 @@ public class ActorStore {
             Set<String> keySet = actorList.keySet();
 
             for (String key : keySet) {
-
+                // "Pad" method required set byte size to string values
                 dos.writeChars(pad(key, 16));
 
                 List<Person> details = (ArrayList<Person>) actorList.get(key);
 
                 // write out to file  count of number of person objects in array
+                // Will allow us to use for loop to iterate through array list 
+                // when we read it back in from the file
                 dos.writeInt(details.size());
-
+                
+                // Write data to file
                 for (Person p : details) {
-                    dos.writeDouble(p.getScore());
+                    dos.writeDouble(p.getScore());                    
                     dos.writeChars(pad(p.getQueryName(), 16));
                     dos.writeChars(pad(p.getName(), 16));
                     dos.writeInt(p.getId());
-                    if (p.getMediumImage() != null) {
+                    if (p.getMediumImage() != null) { 
                         dos.writeChars(pad(p.getMediumImage(), 100));
-                    } else {
+                    } else { // Null handler
                         dos.writeChars(pad("Image not available", 100));
                     }
                     if (p.getOriginalImage() != null) {
@@ -266,8 +327,9 @@ public class ActorStore {
                     dos.flush();
 
                 }
-                dos.close();
+                
             }
+            dos.close();
         } catch (IOException e) {
         }
 
@@ -298,7 +360,6 @@ public class ActorStore {
     }
 
     private void readFromFile() {
-
         ArrayList<Person> fileList = new ArrayList<>();
         DataInputStream dis = null;
         File f = new File(SAVEFILE);
@@ -330,11 +391,8 @@ public class ActorStore {
                         fileList.add(p);
 
                     }
-
                     actorList.put(key, fileList);
-
                 }
-
             } // If file is empty
             else {
                 actorList = new HashMap<>();
@@ -345,29 +403,57 @@ public class ActorStore {
 
     }
 
-    public static void demoListToHTML(Set<Person> list) throws FileNotFoundException {
-        // PrintWriter pWriter = new PrintWriter(strPath + strName);
-        final String HTLMFILE = "index.html";
-        PrintWriter pWriter = new PrintWriter(new FileOutputStream(new File(HTLMFILE), true));
-
-        pWriter.println("<html>");
-        pWriter.println("<head><title>Actors</title></head>");
-        pWriter.println("<body>");
-        pWriter.println("<table border='1'>");
-        pWriter.println("<tr><td>Query</td><td>Name</td><td>ID</td><td>Image URL's</td><td>Links</td><td>Rating</td><td>Comment</td></tr>");
-
-        for (Person p : list) {
-            pWriter.println("<tr>");
-            pWriter.println(p.toHTMLTableData());
-            pWriter.println("</tr>");
+    private Set<Person> cloneSet() { // returns a clone of display set to use for creating html page
+        Person clone = new Person();
+        Set<Person> cloneSet = new TreeSet<>(new NameComparator());
+        try {
+            for (Person p : display) {
+                clone = p.clone();
+                cloneSet.add(clone);
+            }
+        } catch (CloneNotSupportedException e) {
+            System.out.println("Error " + e);
         }
 
-        pWriter.println("</table>");
-        pWriter.println("<br><br><br>");
-        pWriter.println("</body>");
-        pWriter.println("</html>");
-        pWriter.close();
+        return cloneSet;
+    }
+
+    public void demoListToHTML() throws FileNotFoundException {
+        Set<Person> cloneSet = cloneSet();
+        try {
+            PrintWriter pWriter = new PrintWriter(new FileOutputStream(new File(HTLMFILE), true));
+            pWriter.println("<!DOCTYPE html>");
+            pWriter.println("<html>");
+            pWriter.println("<head>");
+            pWriter.println("<title>Actors</title>");
+            pWriter.println("<link rel='stylesheet' type='text/css' href='index.css'>");
+            pWriter.println("</head>");
+            pWriter.println("<body>");
+            pWriter.println("<center><h1>Actors.ie</h1></center>");
+            pWriter.println("<table border='1'>");
+            pWriter.println("<tr><td>Query</td><td>Name</td><td>ID</td><td>Medium Image</td><td>Original Image</td><td>Link</td><td>Rating</td><td>Comment</td></tr>");
+
+            for (Person p : cloneSet) {
+                if(p.getMediumImage().equals("Image not available")){
+                    p.setMediumImage(ERRORIMAGE);
+                }
+                if(p.getOriginalImage().equals("Image not available")){
+                    p.setOriginalImage(ERRORIMAGE);
+                }
+                pWriter.println("<tr>");
+                pWriter.println(p.toHTMLTableData());
+                pWriter.println("</tr>");
+            }
+
+            pWriter.println("</table>");
+            pWriter.println("<br><br><br>");
+            pWriter.println("</body>");
+            pWriter.println("</html>");
+            pWriter.flush();
+            pWriter.close();
+        } catch (FileNotFoundException e) {
+        }
 
     }
-}
 
+}
