@@ -449,7 +449,7 @@ public class  ActorStore {
 
                     String key = readString(dis, SMALLCHUNK);
 
-                    int valueCount = dis.readInt();  // number of Person objects for this key
+                    int valueCount = dis.readInt();  // number of Person objects for each hashmap key
 
                     for (int i = 1; i <= valueCount; i++) {
 
