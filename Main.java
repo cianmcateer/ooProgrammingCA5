@@ -1,63 +1,219 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package ooprogrammingca5;
 
 /**
  *
  * @author CianMcAteer
  */
-
+import java.io.FileNotFoundException;
 import java.util.Scanner;
+import java.util.Set;
+import java.awt.Desktop;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+
+/**
+* Output class
+*/
 public class Main {
-    
+    /**
+    * Switch menu that accesses the ActorStore methods
+    * @author Cian McAteer, Ciaran Maher
+    */
     public static void main(String[] args) {
         Scanner in = new Scanner(System.in);
-        
         ActorStore actorStore = new ActorStore();
-                      
-        
-        String[] options = {"Save and exit","Display all actors","Add Actor to database","Update Actor","List by ID","List by rating","Export to webpage"};                                
-
         int menu = 0;
-        
-        
-        do{
+        boolean isNumber;
+        do {
             System.out.println("Welcome to anyactor.ie! Please choose from the following options");
-            for (int i = 0; i < options.length; i++) {
-                System.out.println(i + ". " + options[i]);
-            }
-            menu = in.nextInt();
-            
-            switch(menu){
+            displayOptions();
+            do {
+                if (in.hasNextInt()) {
+                    menu = in.nextInt();
+                    isNumber = true;
+                } else {
+                    System.out.println("Please enter a whole number");
+                    isNumber = false;
+                    in.next();
+                }
+            } while (!isNumber);
+            switch (menu) {
+                case 0:
+                    System.out.println("Actors sorted by name");
+                    Set<Person> set = actorStore.sortSet(new NameComparator());
+                    actorStore.print(set);
+                    break;
                 case 1:
-                    System.out.println("Please enter an actor to print");
-                    String actor = in.next();
-                    actorStore.printActor(actor);
+                    System.out.println("Actors sorted by ID");
+                    set = actorStore.sortSet(new UIDComparator());
+                    actorStore.print(set);
                     break;
                 case 2:
-                    actorStore.print();
+                    System.out.println("Actors sorted by Rating");
+                    ArrayList<Person> list = actorStore.list();
+                    actorStore.printList(list,new RatingComparator());
                     break;
                 case 3:
-                    System.out.println("Please enter a name to add to database");
-                    String query = in.next();
-                    actorStore.addPerson(query);
+                    String actor = "";
+                    boolean isName;
+                    do {
+                        actor = in.nextLine();
+                        if (validName(actor)) {
+                            actorStore.printSearch(actor);
+                            isName = true;
+                        } else {
+                            System.out.println("Please enter a valid name (No digits,special characters or empty spaces)");
+                            isName = false;
+                        }
+                    } while (!isName);
                     break;
-                case 4:    
-                    
-            }    
-        }while(menu != 10);
-        
-        
-        
-        
-        /**
-         * 
-         * Usable menu here
-        */
-                
+                case 4:
+                    System.out.println("Update by Adding your score and comment here");
+                    String actorName = "";
+                    double rating = -1;
+                    while (!validName(actorName)) {
+                        System.out.println("Please enter actor name (No digits/Special Characters/empty spaces");
+                        in.nextLine();
+                        actorName = in.nextLine();
+                    }
+                    while (!validDouble(rating)) {
+                        System.out.println("Rating (0-5)");
+                        rating = in.nextDouble();
+                    }
+
+                    System.out.println("Comment");
+                    in.nextLine();
+
+                    String comment = in.nextLine();
+                    actorStore.update(actorName, rating, comment);
+                    break;
+                case 5:
+                    String query = "";
+                    while (!validName(query)) {
+                        System.out.println("Please add a new search term here");
+                        in.nextLine();
+                        query = in.nextLine();
+                        actorStore.addPerson(query);
+                    }
+                    System.out.println(query + " has been added!");
+                    break;
+                case 6:
+                    String actorQuery = "";
+                    while (!validName(actorQuery)) {
+                        System.out.println("Search for actor here (No special characters,digits or empty space)");
+                        in.nextLine();
+                        actorQuery = in.nextLine();
+                        actorStore.search(actorQuery);
+                    }
+                    break;
+                case 7:
+                    // Save and send to file
+                    System.out.println("Your data has been saved");
+                    actorStore.sendToFile();
+                    System.exit(0);
+                    break;
+                case 8:
+                    // Prints Search term along with the actors it added to the hashmap
+                    System.out.println("Print map");
+                    actorStore.printMap();
+                    break;
+                case 9:
+                    System.out.println("Delete search");
+                    String deleteKey = "";
+                    while (!validName(deleteKey)) {
+                        in.nextLine();
+                        deleteKey = in.nextLine();
+                    }
+
+                    actorStore.removeSearch(deleteKey);
+                    break;
+                case 10:
+                    String deleteActor = "";
+                    while (!validName(deleteActor)) {
+                        System.out.println("Delete actor");
+                        in.nextLine();
+                        deleteActor = in.nextLine();
+                    }
+                    actorStore.removeActor(deleteActor);
+                    break;
+                case 11:
+                    System.out.println("Saved to html");
+                    try {
+                        actorStore.demoListToHTML();
+                    } catch (FileNotFoundException e) {
+                        System.out.println("Error: " + e);
+                    }
+                    break;
+                case 12:
+                    actorStore.clear();
+                    System.out.println("Your search history has been deleted");
+                    break;
+                case -1:
+                    System.out.println("GoodBye!");                    
+                    break;
+                default:
+                    System.out.println("Invalid number please select one of the options from the menu");
+                    break;
+            }
+        } while (menu != -1);
     }
-    
+
+    /**
+    * validates string, returns false if string contains digits,special characters or if it is empty
+    * @author Cian McAteer
+    * @param s
+    * @return boolean
+    */
+    private static boolean validName(String s) {
+
+        // Letters and spaces only
+        String regex = "[a-zA-Z][a-zA-Z ]*";
+
+        if (!s.matches(regex) || s.equals("")) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+    /**
+    * Only returns true if 'd' is greater than 1 and less than or equal to 5
+    * @author Cian McAteer
+    * @param d
+    * @return boolean
+    */
+    private static boolean validDouble(double d) { // Returns false if number is greater than 5 or less than 1
+        if (d < 1) {
+            return false;
+        } else if (d > 5) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+    * Reads and prints "options.txt" file by line. Ends when a line is left blank (Null)
+    * @author Cian McAteer
+    */
+    private static void displayOptions() { // Reading from a file allows us to update the menu without having to access our code
+        final String FILE = "options.txt";
+
+        try {
+            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(FILE)));
+
+            String option;
+            // Print line as long as it has text i.e not null
+            while ((option = br.readLine()) != null) {
+                System.out.println(option);
+            }
+            br.close();
+        } catch (IOException e) {
+            System.out.println("ERROR: " + e);
+        }
+    }
 }
