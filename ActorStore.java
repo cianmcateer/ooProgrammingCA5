@@ -22,6 +22,7 @@ import java.util.TreeMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.ConcurrentModificationException;
@@ -107,15 +108,16 @@ public class  ActorStore {
         return printList;
     } 
     
-    public void printList(ArrayList<Person> list,Comparator<Person> c){
-        Collections.sort(list,c);
-        for(Person p : list){
+    /**
+     * Prints any collection (TreeSet,ArrayList etc...) of type Person
+     * @author Cian McAteer
+     * @param c
+     * 
+     */
+    public void print(Collection<Person> c){
+        for(Person p : c){
             System.out.println(p);
-        }
-    }
-    public <T> void print(T list){
-        //T<Person> list;
-        
+        }        
     }
     /**
      * Returns a tree set of type person sorted by a comparator of type person
@@ -148,22 +150,7 @@ public class  ActorStore {
 
         }
         return display;
-    }
-
-    /**
-     * Prints person set if set is not empty
-     * @author Cian McAteer
-     * @param set
-     */
-    public void print(Set<Person> set) { // Print out any set of type Person
-        if (set.isEmpty()) {
-            System.out.println("No actors have been added.");
-        } else {
-            for (Person p : set) {
-                System.out.println(p);
-            }
-        }
-    }
+    } 
 
     /**
      * Deletes a search query (key of hashmap) and all of it's contents(values)
@@ -352,7 +339,8 @@ public class  ActorStore {
             }
         }
         if(!foundList.isEmpty()){
-            printList(foundList,new ScoreComparator());
+            Collections.sort(foundList,new ScoreComparator());
+            print(foundList);
         }else{
             addPerson(query);
         }
